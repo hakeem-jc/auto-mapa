@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Map Marker",
-  description: "Find multiple select locations on maps",
+  description: "Find multiple locations on maps",
 };
 
 export default function RootLayout({
