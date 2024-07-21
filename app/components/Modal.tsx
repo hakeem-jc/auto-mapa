@@ -8,7 +8,7 @@ const Modal = () => {
         <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
           <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Añade Ubicaciónes con URL
+              Añadir Ubicaciones con URL
             </h3>
             <button
               type="button"
@@ -37,7 +37,7 @@ const Modal = () => {
             <div className="grid gap-4 mb-4 grid-cols-2">
               <div className="col-span-2">
                 <label htmlFor="name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">URL</label>
-                <input type="text" name="name" id="name" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="www.location.com" />
+                <input type="text" name="name" id="name" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="www.ubicación.com" />
             </div>
             </div>
             <button
@@ -56,7 +56,7 @@ const Modal = () => {
                   clip-rule="evenodd"
                 ></path>
               </svg>
-              Añade ubicaciones
+              Añadir Ubicaciones
             </button>
           </form>
         </div>
