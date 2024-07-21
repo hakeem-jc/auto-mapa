@@ -1,4 +1,28 @@
+import { useState } from "react";
+
 const Modal = ({ toggleModal }: { toggleModal: () => void }) => {
+  const [url, setUrl] = useState<string>("");
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    try {
+      const response = await fetch("/locations", {
+        method: 'POST',
+        body: JSON.stringify({ url }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API call failed with status ${response.status}`);
+      }
+
+      console.log('API call successful');
+      toggleModal();
+    } catch (error) {
+      console.error('Error submitting URL:', error);
+    }
+  };
+
   return (
     <div className="absolute flex flex-col h-screen w-full z-10 justify-center items-center bg-black/50">
       <div aria-hidden="true">
@@ -32,21 +56,23 @@ const Modal = ({ toggleModal }: { toggleModal: () => void }) => {
                 <span className="sr-only">Close modal</span>
               </button>
             </div>
-            <form className="p-4 md:p-5">
+            <form className="p-4 md:p-5" onSubmit={handleSubmit}>
               <div className="grid gap-4 mb-4 grid-cols-2">
                 <div className="col-span-2">
                   <label
-                    htmlFor="name"
+                    htmlFor="url"
                     className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                   >
                     URL
                   </label>
                   <input
                     type="text"
-                    name="name"
-                    id="name"
+                    name="url"
+                    id="url"
                     className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                     placeholder="www.ubicación.com"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
                   />
                 </div>
               </div>
