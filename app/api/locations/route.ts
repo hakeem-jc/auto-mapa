@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       const $ = cheerio.load(data, null, false);
       const textContent = $('body').contents();
       console.log(textContent)
-      // TODO - Get the write site to pull from so you can choose the right selector for it's text
+      // TODO - Get the right site to pull from so you can choose the right selector for it's text
       return NextResponse.json({ url });
     } catch (error: any) {
       return NextResponse.json({ url, error: error.message }, { status: 500 });
