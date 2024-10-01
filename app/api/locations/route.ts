@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import * as cheerio from 'cheerio';
+import { OpenAI } from "openai";
 import axios from 'axios';
+
+const openai = new OpenAI();
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,11 +14,18 @@ export async function POST(request: NextRequest) {
 
     try {
       const { data } = await axios.get(url);
-      const $ = cheerio.load(data, null, false);
-      const textContent = $('body').contents();
-      console.log(textContent)
-      // TODO - Get the right site to pull from so you can choose the right selector for it's text
-      return NextResponse.json({ url });
+
+      const messages = [
+        { "role": "system", "content": "You're an HTML Parser that extracts locations from HTML code into an array of strings e.g. ['Retiro Park, Madrid, Spain']. Only return javascript code. No markup" },
+        { "role": "user", "content": `Parse this HTML and return the array of locations present in it:${data}` }
+      ];
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-2024-05-13",
+        messages: messages as any
+      });
+
+      return NextResponse.json({ result: completion.choices[0].message }, { status: 200 });
     } catch (error: any) {
       return NextResponse.json({ url, error: error.message }, { status: 500 });
     }
