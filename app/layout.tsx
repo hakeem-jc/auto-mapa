@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Map Marker",
-  description: "Find multiple locations on maps",
+  title: "Auto Mapa",
+  description: "Encuentra sus ubicaciones más rápido",
 };
 
 export default function RootLayout({
