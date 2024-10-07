@@ -19,8 +19,11 @@ const MapComponent: React.FC = () => {
   ];
 
   useEffect(() => {
-    const url = process.env.VERCEL_ENV || process.env.NEXT_PUBLIC_API_URL;
+    const url = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_API_URL;
     console.log(url);
+    console.log(process.env.VERCEL_URL);
+    console.log(process.env.VERCEL_ENV);
+
 
     const geocodeAddresses = async () => {
       const geocoder = new google.maps.Geocoder();
