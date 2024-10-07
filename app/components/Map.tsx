@@ -19,6 +19,9 @@ const MapComponent: React.FC = () => {
   ];
 
   useEffect(() => {
+    const url = process.env.VERCEL_ENV || process.env.NEXT_PUBLIC_API_URL;
+    console.log(url);
+
     const geocodeAddresses = async () => {
       const geocoder = new google.maps.Geocoder();
       const geocodedLocations = await Promise.all(
