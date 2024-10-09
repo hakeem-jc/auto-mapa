@@ -1,12 +1,12 @@
 import { chromium } from 'playwright';
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const browser = await chromium.launch({ headless: true });
     const context = await browser.newContext();
     const page = await context.newPage();
 
-    await page.goto('https://subastas.boe.es/');
+    await page.goto(process.env.SUBASTAS_URL || 'https://subastas.boe.es/');
     await page.getByLabel('Seleccione la provincia').selectOption('28');
     await page.getByRole('button', { name: 'Buscar' }).click();
 
