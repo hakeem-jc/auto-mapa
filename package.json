@@ -12,8 +12,9 @@
     "@react-google-maps/api": "^2.19.3",
     "axios": "^1.7.4",
     "cheerio": "^1.0.0",
-    "next": "14.2.5",
+    "next": "^14.2.15",
     "openai": "^4.66.1",
+    "playwright": "^1.48.0",
     "react": "^18",
     "react-dom": "^18"
   },
