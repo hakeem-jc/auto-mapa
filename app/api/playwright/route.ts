@@ -6,7 +6,7 @@ interface Subasta {
   links: string[];
 }
 
-export function parseSubastasHtml(html: string): Subasta[] {
+function parseSubastasHtml(html: string, url: string): Subasta[] {
   const $ = load(html);
   const subastaElements = $(".resultado-busqueda");
 
@@ -20,13 +20,14 @@ export function parseSubastasHtml(html: string): Subasta[] {
     subasta.text = $(element).text().trim();
 
     $(element)
-      .find("a")
-      .each((i, link) => {
-        const href = $(link).attr("href");
-        if (href) {
-          subasta.links.push(href);
-        }
-      });
+    .find("a")
+    .each((i, link) => {
+      const href = $(link).attr("href");
+      if (href) {
+        const cleanedHref = href.startsWith('.') ? href.substring(1) : href;
+        subasta.links.push(new URL(cleanedHref, url).toString());
+      }
+    });
 
     subastas.push(subasta);
   });
@@ -51,7 +52,7 @@ export async function GET(_request: Request) {
     const html = await page.content();
     await browser.close();
 
-    const subastasData = parseSubastasHtml(html);
+    const subastasData = parseSubastasHtml(html,url);
 
     return new Response(JSON.stringify({ subastas: subastasData }), {
       status: 200,
