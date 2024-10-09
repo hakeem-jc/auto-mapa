@@ -1,35 +1,72 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { OpenAI } from "openai";
-import axios from 'axios';
+import { chromium } from "playwright";
+import { load } from "cheerio";
 
-const openai = new OpenAI();
+interface Subasta {
+  text: string;
+  links: string[];
+}
 
-export async function POST(request: NextRequest) {
+function parseSubastasHtml(html: string, url: string): Subasta[] {
+  const $ = load(html);
+  const subastaElements = $(".resultado-busqueda");
+
+  const subastas: Subasta[] = [];
+  subastaElements.each((_index, element) => {
+    const subasta: Subasta = {
+      text: "",
+      links: [],
+    };
+
+    subasta.text = $(element).text().trim();
+
+    $(element)
+    .find("a")
+    .each((i, link) => {
+      const href = $(link).attr("href");
+      if (href) {
+        const cleanedHref = href.startsWith('.') ? href.substring(1) : href;
+        subasta.links.push(new URL(cleanedHref, url).toString());
+      }
+    });
+
+    subastas.push(subasta);
+  });
+
+  return subastas;
+}
+
+export async function GET(_request: Request) {
+  const url = process.env.SUBASTAS_URL || "https://subastas.boe.es/";
+
   try {
-    const { url } = await request.json();
+    const browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(url);
+    await page.getByLabel("Seleccione la provincia").selectOption("28");
+    await page.getByRole("button", { name: "Buscar" }).click();
 
-    if (!url || typeof url !== 'string') {
-      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
-    }
+    // Wait for page to load (adjust timeout as needed)
+    await page.waitForTimeout(1000);
 
-    try {
-      const { data } = await axios.get(url);
+    const html = await page.content();
+    await browser.close();
 
-      const messages = [
-        { "role": "system", "content": "You're an HTML Parser that extracts locations from HTML code into an array of strings e.g. ['Retiro Park, Madrid, Spain']. Only return javascript code. No markup" },
-        { "role": "user", "content": `Parse this HTML and return the array of locations present in it:${data}` }
-      ];
+    const subastasData = parseSubastasHtml(html,url);
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-2024-05-13",
-        messages: messages as any
-      });
-
-      return NextResponse.json({ result: completion.choices[0].message }, { status: 200 });
-    } catch (error: any) {
-      return NextResponse.json({ url, error: error.message }, { status: 500 });
-    }
+    return new Response(JSON.stringify({ subastas: subastasData }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   } catch (error) {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    console.error(error);
+    return new Response(JSON.stringify({ error: "Playwright script failed" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   }
 }
