@@ -7,6 +7,7 @@ import {
   useLoadScript,
 } from "@react-google-maps/api";
 import Loader from "@/app/components/Loader";
+import { Subasta } from "@/app/interfaces";
 
 interface GeocodedLocation {
   lat: number;
@@ -30,11 +31,13 @@ const MapComponent: React.FC = () => {
     null
   );
 
-  const addresses = [
-    "6 Calle de las Infantas, Madrid, Spain",
-    "Plaza Mayor, Madrid, Spain",
-    "Retiro Park, Madrid, Spain",
-    "Royal Palace of Madrid, Madrid, Spain",
+   // const [addresses, setAddresses] = useState<Subasta[]>([]);
+
+   const addresses:Subasta[] = [
+    { text: "TEMP", location: "6 Calle de las Infantas, Madrid, Spain", link: "https://temp.com"},
+    { text: "TEMP", location: "Plaza Mayor, Madrid, Spain", link: "https://temp.com"},
+    { text: "TEMP", location: "Retiro Park, Madrid, Spain", link: "https://temp.com"},
+    { text: "TEMP", location: "Royal Palace of Madrid, Madrid, Spain", link: "https://temp.com"},
   ];
 
   const { isLoaded } = useLoadScript({
@@ -48,7 +51,7 @@ const MapComponent: React.FC = () => {
   }, [isLoaded]);
 
   // Geocoding function to convert addresses to coordinates
-  const geocodeAddresses = async (addresses: string[]) => {
+  const geocodeAddresses = async (addresses: Subasta[]) => {
     const geocoder = new google.maps.Geocoder();
     const geocodedLocations: GeocodedLocation[] = [];
 
@@ -58,7 +61,7 @@ const MapComponent: React.FC = () => {
         geocodedLocations.push({
           lat: result.lat(),
           lng: result.lng(),
-          address,
+          address: address.location,
         });
       } catch (error) {
         console.error("Geocode failed: ", error);
@@ -70,10 +73,10 @@ const MapComponent: React.FC = () => {
   // Helper function for geocoding a single address
   const geocodeAddress = (
     geocoder: google.maps.Geocoder,
-    address: string
+    address: Subasta
   ): Promise<google.maps.LatLng> => {
     return new Promise((resolve, reject) => {
-      geocoder.geocode({ address }, (results, status) => {
+      geocoder.geocode({ address: address.location }, (results, status) => {
         if (status === "OK" && results && results[0]) {
           resolve(results[0].geometry.location);
         } else {
