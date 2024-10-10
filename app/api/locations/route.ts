@@ -1,10 +1,6 @@
 import { chromium } from "playwright";
 import { load } from "cheerio";
-
-interface Subasta {
-  text: string;
-  link: string;
-}
+import { Subasta } from "@/app/interfaces";
 
 function parseSubastasHtml(html: string, url: string): Subasta[] {
   const $ = load(html);
@@ -14,6 +10,7 @@ function parseSubastasHtml(html: string, url: string): Subasta[] {
   subastaElements.each((_index, element) => {
     const subasta: Subasta = {
       text: "",
+      location: "",
       link: "",
     };
 
