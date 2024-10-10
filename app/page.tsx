@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
-import Header from "./components/Header";
-import Map from "./components/Map";
-import Modal from "./components/Modal";
+import Header from "@/app/components/Header";
+import Map from "@/app/components/Map";
+import Modal from "@/app/components/Modal";
 
 export default function Home() {
   const [openModal, setOpenModal] = useState(false);

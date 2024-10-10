@@ -6,7 +6,7 @@ import {
   InfoWindow,
   useLoadScript,
 } from "@react-google-maps/api";
-import Loader from "./Loader";
+import Loader from "@/app/components/Loader";
 
 interface GeocodedLocation {
   lat: number;
