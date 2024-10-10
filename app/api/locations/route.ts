@@ -3,7 +3,7 @@ import { load } from "cheerio";
 
 interface Subasta {
   text: string;
-  links: string[];
+  link: string;
 }
 
 function parseSubastasHtml(html: string, url: string): Subasta[] {
@@ -14,19 +14,20 @@ function parseSubastasHtml(html: string, url: string): Subasta[] {
   subastaElements.each((_index, element) => {
     const subasta: Subasta = {
       text: "",
-      links: [],
+      link: "",
     };
 
-    subasta.text = $(element).text().trim();
+    subasta.text = $(element).text().trim().split("\n")[0];
 
     $(element)
     .find("a")
-    .each((i, link) => {
+    .each((_i, link) => {
       const href = $(link).attr("href");
       if (href) {
         const cleanedHref = href.startsWith('.') ? href.substring(1) : href;
-        subasta.links.push(new URL(cleanedHref, url).toString());
+        subasta.link = new URL(cleanedHref, url).toString();
       }
+      return false; // Break the loop after the first iteration. Otherwise it returns duplicate links
     });
 
     subastas.push(subasta);
@@ -38,7 +39,7 @@ function parseSubastasHtml(html: string, url: string): Subasta[] {
 export async function GET(_request: Request) {
   const url = process.env.SUBASTAS_URL || "https://subastas.boe.es/";
   let html_pages = [];
-  let wait_time = 50;
+  let wait_time = 500;
 
   try {
     const browser = await chromium.launch({ headless: true });
