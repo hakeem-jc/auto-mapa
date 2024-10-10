@@ -37,6 +37,8 @@ function parseSubastasHtml(html: string, url: string): Subasta[] {
 
 export async function GET(_request: Request) {
   const url = process.env.SUBASTAS_URL || "https://subastas.boe.es/";
+  let html_pages = [];
+  let wait_time = 50;
 
   try {
     const browser = await chromium.launch({ headless: true });
@@ -47,12 +49,26 @@ export async function GET(_request: Request) {
     await page.getByRole("button", { name: "Buscar" }).click();
 
     // Wait for page to load (adjust timeout as needed)
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(wait_time);
 
-    const html = await page.content();
-    await browser.close();
+    while (true) {
+      const html = await page.content();
+      html_pages.push(html);
 
-    const subastasData = parseSubastasHtml(html,url);
+      try {
+        // Try clicking next page button
+        await page.getByRole('link', { name: 'Pág. siguiente' }).first().click();
+        await page.waitForTimeout(wait_time); // Adjust timeout for next page load
+      } catch (error) {
+        // Likely reached the last page
+        break;
+      }
+    }
+
+    const subastasData = [];
+    for (const pageHtml of html_pages) {
+      subastasData.push(...parseSubastasHtml(pageHtml, url));
+    }
 
     return new Response(JSON.stringify({ subastas: subastasData }), {
       status: 200,
