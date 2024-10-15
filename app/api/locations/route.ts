@@ -1,6 +1,6 @@
 import { chromium } from "playwright";
 import { load } from "cheerio";
-import { Subasta, LocationRequest, LocationResponse, Locations } from "@/app/interfaces";
+import { Subasta, LocationRequest, Locations } from "@/app/interfaces";
 import { OpenAI } from "openai";
 
 const openai = new OpenAI();
@@ -39,7 +39,9 @@ export async function GET(_request: Request) {
   const url = process.env.SUBASTAS_URL || "https://subastas.boe.es/";
   let html_pages = [];
   let wait_time = 500;
+  let subastasData = [];
 
+  // Get data with Playwright 
   try {
     const browser = await chromium.launch({ headless: true });
     const context = await browser.newContext();
@@ -48,7 +50,7 @@ export async function GET(_request: Request) {
     await page.getByLabel("Seleccione la provincia").selectOption("28");
     await page.getByRole("button", { name: "Buscar" }).click();
 
-    // Wait for page to load (adjust timeout as needed)
+    // Wait for the initial page to load
     await page.waitForTimeout(wait_time);
 
     while (true) {
@@ -56,32 +58,45 @@ export async function GET(_request: Request) {
       html_pages.push(html);
 
       try {
-        // Try clicking next page button
+        // Click on the "Pág. siguiente" link to go to the next page
         await page
           .getByRole("link", { name: "Pág. siguiente" })
           .first()
           .click();
-        await page.waitForTimeout(wait_time); // Adjust timeout for next page load
-      } catch (error) {
-        // Likely reached the last page
+        await page.waitForTimeout(wait_time); // Adjust timeout for the next page load
+      } catch {
+        // Reached the last page
         break;
       }
     }
 
-    const subastasData = [];
+    // Parse subastas data from the collected HTML pages
     for (const pageHtml of html_pages) {
       subastasData.push(...parseSubastasHtml(pageHtml, url));
     }
 
-    const locationRequests: LocationRequest[] = [];
+    await browser.close(); // Ensure the browser is closed
+  } catch (error) {
+    console.error("Playwright script failed:", error);
+    return new Response(JSON.stringify({ error: "Playwright script failed" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
 
-    for (let sub of subastasData) {
-      locationRequests.push({
-        name: sub.name,
-        text: sub.text
-      });
-    }
+  // Prepare location requests for OpenAI
+  const locationRequests: LocationRequest[] = subastasData.map((sub) => ({
+    name: sub.name,
+    text: sub.text,
+  }));
 
+  // Extract and format location with OpenAI API
+  let mapped_locations: { [key: string]: string } = {};
+  let unmapped_locations: { [key: string]: string } = {};
+
+  try {
     const messages = [
       {
         role: "system",
@@ -124,7 +139,7 @@ export async function GET(_request: Request) {
       },
       {
         role: "user",
-        content: JSON.stringify(locationRequests)
+        content: JSON.stringify(locationRequests),
       },
     ];
 
@@ -132,51 +147,62 @@ export async function GET(_request: Request) {
       model: "gpt-4o-2024-05-13",
       messages: messages as any,
     });
-    
 
     let open_ai_response = completion.choices[0].message.content;
-    let location_data:Locations = {mapped_locations: [], unmapped_locations:[]};
-    let mapped_locations: { [key: string]: string } = {};
-    let unmapped_locations: { [key: string]: string }  = {};
+    let location_data: Locations = {
+      mapped_locations: [],
+      unmapped_locations: [],
+    };
 
     if (open_ai_response) {
-      open_ai_response = open_ai_response.replace(/`/g, "");
-      open_ai_response = open_ai_response.replace(/json/g, "");
+      open_ai_response = open_ai_response
+        .replace(/`/g, "")
+        .replace(/json/g, "");
       location_data = JSON.parse(open_ai_response);
     }
 
-    for (let data of location_data.mapped_locations){
+    for (let data of location_data.mapped_locations) {
       mapped_locations[data.name] = data.location;
     }
 
-    for (let data of location_data.unmapped_locations){
+    for (let data of location_data.unmapped_locations) {
       unmapped_locations[data.name] = data.location;
     }
-    
-    let subastasEnMapa = [];
-    let subastasSinMapa = [];
-
-    for (let subasta of subastasData) {
-      if (mapped_locations[subasta.name]) {
-        subastasEnMapa.push({...subasta, location: mapped_locations[subasta.name]});
-      } else if (unmapped_locations[subasta.name]) {
-        subastasSinMapa.push({...subasta, location: unmapped_locations[subasta.name]});
-      }
-    }
-
-    return new Response(JSON.stringify({ subastas: subastasEnMapa, subastasSinMapa }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
   } catch (error) {
-    console.error(error);
-    return new Response(JSON.stringify({ error: "Playwright script failed" }), {
+    console.error("OpenAI API call failed:", error);
+    return new Response(JSON.stringify({ error: "OpenAI API call failed" }), {
       status: 500,
       headers: {
         "Content-Type": "application/json",
       },
     });
   }
+
+  // Combine the subastas data with mapped and unmapped locations
+  let subastasEnMapa = [];
+  let subastasSinMapa = [];
+
+  for (let subasta of subastasData) {
+    if (mapped_locations[subasta.name]) {
+      subastasEnMapa.push({
+        ...subasta,
+        location: mapped_locations[subasta.name],
+      });
+    } else if (unmapped_locations[subasta.name]) {
+      subastasSinMapa.push({
+        ...subasta,
+        location: unmapped_locations[subasta.name],
+      });
+    }
+  }
+
+  return new Response(
+    JSON.stringify({ subastas: subastasEnMapa, subastasSinMapa }),
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 }
