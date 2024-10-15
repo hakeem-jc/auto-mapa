@@ -10,7 +10,7 @@ export interface LocationRequest {
   text: string;
 }
 
-export interface LocationResponse {
+interface LocationResponse {
   name: string;
   location: string;
 }
