@@ -34,10 +34,10 @@ const MapComponent: React.FC = () => {
    // const [addresses, setAddresses] = useState<Subasta[]>([]);
 
    const addresses:Subasta[] = [
-    { text: "TEMP", location: "6 Calle de las Infantas, Madrid, Spain", link: "https://temp.com"},
-    { text: "TEMP", location: "Plaza Mayor, Madrid, Spain", link: "https://temp.com"},
-    { text: "TEMP", location: "Retiro Park, Madrid, Spain", link: "https://temp.com"},
-    { text: "TEMP", location: "Royal Palace of Madrid, Madrid, Spain", link: "https://temp.com"},
+    { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "6 Calle de las Infantas, Madrid, Spain", link: "https://temp.com"},
+    { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "Plaza Mayor, Madrid, Spain", link: "https://temp.com"},
+    { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "Retiro Park, Madrid, Spain", link: "https://temp.com"},
+    { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "Royal Palace of Madrid, Madrid, Spain", link: "https://temp.com"},
   ];
 
   const { isLoaded } = useLoadScript({
