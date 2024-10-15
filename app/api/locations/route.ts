@@ -1,6 +1,6 @@
 import { chromium } from "playwright";
 import { load } from "cheerio";
-import { Subasta } from "@/app/interfaces";
+import { Subasta, LocationRequest, LocationResponse, Locations } from "@/app/interfaces";
 import { OpenAI } from "openai";
 
 const openai = new OpenAI();
@@ -73,38 +73,58 @@ export async function GET(_request: Request) {
       subastasData.push(...parseSubastasHtml(pageHtml, url));
     }
 
-    // const messages = [
-    //   { "role": "system", "content": "You are a location formatting assistant. Your task is to process an array of objects containing text attributes that represent locations in Spain and format these locations properly for the Google Maps Geocoding API." },
-    //   { "role": "user", "content": 'Extract and format the address in the following text e.g. Find "CL/ ALBASANZ, 38. MADRID" and return 38, Calle Albasanz, Madrid"' }
-    // ];
+    const locationRequests: LocationRequest[] = [];
+
+    for (let sub of subastasData) {
+      locationRequests.push({
+        name: sub.name,
+        text: sub.text
+      });
+    }
 
     const messages = [
       {
         role: "system",
-        content: `You are a location formatting assistant. Your task is to process an array of objects containing text attributes that represent locations in Spain and format these locations properly for the Google Maps Geocoding API. If a location can't be determined, add it to a different array with the best guess.
+        content: `You are a location formatting API. Your task is to process an array of objects containing text attributes that represent locations in Spain and format these locations properly for the Google Maps Geocoding API. If a location can't be determined, add it to a different array with the best guess.
+                  Always format the response as JSON to be parsed into a JavaScript object.
                   Instructions:
-                  1. Receive an array of objects where each object contains a 'text' field that includes text data describing a place in Spain and an empty 'location' field that will be populated.
-                  2. Ensure the location is accurately formatted for the Google Maps Geocoding API, which includes:
+                  1. Receive an array of objects where each object contains a 'text' field that includes text data describing a place in Spain
+                  2. Remove text field and add a location field to each object. Ensure the location is accurately formatted for the Google Maps Geocoding API, which includes:
                     - Correct capitalization
                     - Inclusion of important geographic details such as city, region, and country (Spain)
                     - Proper punctuation and spacing
                   3. Return the updated array of objects, ensuring each location is fully specified and standardized as a single string suitable for geocoding in the attribute field.
                   4. If an exact location can't be specified, put the best option based on the details then create a separate array with the same format.
-                  5. Example result:
+                  5. Return the information as a JSON object with the following structure so it can be easily parsed to JavaScript:
+                    {
+                      "mapped_locations": [
+                        {
+                          "name": "string",
+                          "location": "string",
+                        }
+                      ],
+                      "unmapped_locations": [
+                        {
+                          "name": "string",
+                          "location": "string",
+                        }
+                      ]
+                    }
+                  6. Example result:
                   {
                     mapped_locations: [
-                      { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "6 Calle de las Infantas, Madrid, Spain", link: "https://temp.com" },
-                      { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "Plaza Mayor, Madrid, Spain", link: "https://temp.com" }
+                      { name: "SUBASTA SUB-JA-2024-TEMP1", text: "SUBASTA SUB-JA-2024-TEMP", location: "6 Calle de las Infantas, Madrid, Spain", link: "https://temp.com" },
+                      { name: "SUBASTA SUB-JA-2024-TEMP2", text: "SUBASTA SUB-JA-2024-TEMP", location: "Plaza Mayor, Madrid, Spain", link: "https://temp.com" }
                     ],
                     unmapped_locations: [
-                      { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "Coslada, Spain", link: "https://temp.com" },
-                      { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "Madrid, Spain", link: "https://temp.com" }
+                      { name: "SUBASTA SUB-JA-2024-TEMP3", text: "SUBASTA SUB-JA-2024-TEMP", location: "Coslada, Spain", link: "https://temp.com" },
+                      { name: "SUBASTA SUB-JA-2024-TEMP4", text: "SUBASTA SUB-JA-2024-TEMP", location: "Madrid, Spain", link: "https://temp.com" }
                     ]
                   }`,
       },
       {
         role: "user",
-        content: JSON.stringify(subastasData)
+        content: JSON.stringify(locationRequests)
       },
     ];
 
@@ -112,13 +132,39 @@ export async function GET(_request: Request) {
       model: "gpt-4o-2024-05-13",
       messages: messages as any,
     });
-
-    console.log(completion.choices[0].message);
     
 
-    // return NextResponse.json({ result: completion.choices[0].message }, { status: 200 });
+    let open_ai_response = completion.choices[0].message.content;
+    let location_data:Locations = {mapped_locations: [], unmapped_locations:[]};
+    let mapped_locations: { [key: string]: string } = {};
+    let unmapped_locations: { [key: string]: string }  = {};
 
-    return new Response(JSON.stringify({ subastas: subastasData }), {
+    if (open_ai_response) {
+      open_ai_response = open_ai_response.replace(/`/g, "");
+      open_ai_response = open_ai_response.replace(/json/g, "");
+      location_data = JSON.parse(open_ai_response);
+    }
+
+    for (let data of location_data.mapped_locations){
+      mapped_locations[data.name] = data.location;
+    }
+
+    for (let data of location_data.unmapped_locations){
+      unmapped_locations[data.name] = data.location;
+    }
+    
+    let subastasEnMapa = [];
+    let subastasSinMapa = [];
+
+    for (let subasta of subastasData) {
+      if (mapped_locations[subasta.name]) {
+        subastasEnMapa.push({...subasta, location: mapped_locations[subasta.name]});
+      } else if (unmapped_locations[subasta.name]) {
+        subastasSinMapa.push({...subasta, location: unmapped_locations[subasta.name]});
+      }
+    }
+
+    return new Response(JSON.stringify({ subastas: subastasEnMapa, subastasSinMapa }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
