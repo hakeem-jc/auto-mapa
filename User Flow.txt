@@ -1,8 +1,0 @@
-User Flow
-
-Load homepage (map and navbar) (Add customer loader)
-Map shows default location
-User clicks on button on navbar and gets a form in a modal
-Enter a URL to get locations
-Backend scrapes web text then sends it to open ai to get locations with pre-set query
-Response passes a string of locations to map which displays them along with sidebar that you can click to go to them
