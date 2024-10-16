@@ -7,7 +7,6 @@ import {
   useLoadScript,
 } from "@react-google-maps/api";
 import Loader from "@/app/components/Loader";
-// import { Subasta, LocationsAPIResponse } from "@/app/interfaces";
 import { Subasta } from "@/app/interfaces";
 
 interface GeocodedLocation {
@@ -26,31 +25,25 @@ const map_center_madrid = {
   lng: -3.70379,
 };
 
-const MapComponent: React.FC = () => {
+interface MapInterface {
+  addresses:Subasta[];
+}
+
+const MapComponent: React.FC<MapInterface> = ({ addresses }) => {
   const [markers, setMarkers] = useState<GeocodedLocation[]>([]);
   const [selectedMarker, setSelectedMarker] = useState<GeocodedLocation | null>(
     null
   );
-
-  const addresses:Subasta[] = [
-    { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "6 Calle de las Infantas, Madrid, Spain", link: "https://temp.com"},
-    { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "Plaza Mayor, Madrid, Spain", link: "https://temp.com"},
-    { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "Retiro Park, Madrid, Spain", link: "https://temp.com"},
-    { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "Royal Palace of Madrid, Madrid, Spain", link: "https://temp.com"},
-  ];
-
-  // const [addresses, setAddresses] = useState<Subasta[]>(temp_addresses);
-  // const [addresses_not_on_map, setAddressesNotonMap] = useState<Subasta[]>(temp_addresses);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
   });
 
   useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && addresses) {
       geocodeAddresses(addresses);
     }
-  }, [isLoaded]);
+  }, [isLoaded, addresses]);
 
   // Geocoding function to convert addresses to coordinates
   const geocodeAddresses = async (addresses: Subasta[]) => {
