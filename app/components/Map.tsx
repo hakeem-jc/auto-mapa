@@ -7,7 +7,8 @@ import {
   useLoadScript,
 } from "@react-google-maps/api";
 import Loader from "@/app/components/Loader";
-import { Subasta, LocationsAPIResponse } from "@/app/interfaces";
+// import { Subasta, LocationsAPIResponse } from "@/app/interfaces";
+import { Subasta } from "@/app/interfaces";
 
 interface GeocodedLocation {
   lat: number;
@@ -31,45 +32,25 @@ const MapComponent: React.FC = () => {
     null
   );
 
-  const temp_addresses:Subasta[] = [
+  const addresses:Subasta[] = [
     { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "6 Calle de las Infantas, Madrid, Spain", link: "https://temp.com"},
     { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "Plaza Mayor, Madrid, Spain", link: "https://temp.com"},
     { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "Retiro Park, Madrid, Spain", link: "https://temp.com"},
     { name: "SUBASTA SUB-JA-2024-TEMP", text: "SUBASTA SUB-JA-2024-TEMP", location: "Royal Palace of Madrid, Madrid, Spain", link: "https://temp.com"},
   ];
 
-  const [addresses, setAddresses] = useState<Subasta[]>(temp_addresses);
-  const [addresses_not_on_map, setAddressesNotonMap] = useState<Subasta[]>(temp_addresses);
+  // const [addresses, setAddresses] = useState<Subasta[]>(temp_addresses);
+  // const [addresses_not_on_map, setAddressesNotonMap] = useState<Subasta[]>(temp_addresses);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
   });
 
-  const getData = async (): Promise<void> => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/api/locations`;
-  
-    try {
-      const response = await fetch(url);
-    
-      if (!response.ok) {
-        console.error(`Response status: ${response.status}`);
-      } else {
-        const json: LocationsAPIResponse = await response.json();
-  
-        setAddresses(json.subastasEnMapa);
-        setAddressesNotonMap(json.subastasSinMapa);
-      }
-    } catch (error: any) {
-      console.error(error.message);
-    }
-  };
-
   useEffect(() => {
-    getData();
     if (isLoaded) {
       geocodeAddresses(addresses);
     }
-  }, [isLoaded, addresses]);
+  }, [isLoaded]);
 
   // Geocoding function to convert addresses to coordinates
   const geocodeAddresses = async (addresses: Subasta[]) => {
