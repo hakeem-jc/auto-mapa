@@ -19,3 +19,8 @@ export interface Locations {
   mapped_locations: LocationResponse[],
   unmapped_locations: LocationResponse[]
 }
+
+export interface LocationsAPIResponse {
+  subastasEnMapa: Subasta[],
+  subastasSinMapa: Subasta[]
+}

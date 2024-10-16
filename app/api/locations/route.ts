@@ -197,7 +197,7 @@ export async function GET(_request: Request) {
   }
 
   return new Response(
-    JSON.stringify({ subastas: subastasEnMapa, subastasSinMapa }),
+    JSON.stringify({ subastasEnMapa, subastasSinMapa }),
     {
       status: 200,
       headers: {
