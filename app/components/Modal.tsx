@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+// TODO - Convert Modal into list of unmapped locations
 const Modal = ({ toggleModal }: { toggleModal: () => void }) => {
   const [url, setUrl] = useState<string>("");
 
