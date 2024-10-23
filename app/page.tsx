@@ -16,7 +16,49 @@ export default function Home() {
   const toggleModal = () => setOpenModal(!openModal);
 
   // Scrape data from Subastas portal, format with AI and store in database
-  const syncData = () => {};
+  const syncData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const subasta_portal_response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/sincroniza_subastas`
+      );
+
+      if (!subasta_portal_response.ok) {
+        throw new Error("Failed to fetch subastas");
+      }
+
+      const subasta_portal_data: LocationsAPIResponse = await subasta_portal_response.json();
+
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subastas`, {
+        method: 'POST', 
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(subasta_portal_data)
+      })
+      .then(res => {
+        if (!res.ok) {
+          // throw new Error('Network response was not ok');
+          console.error("API Error calling Subasta")
+        }
+        return res.json();
+      }).then(data => {
+          setSubastasEnMapa(data.subastasEnMapa);
+          setSubastasSinMapa(data.subastasSinMapa);
+      })
+      .catch(error => {
+        // Handle errors
+        console.error(error);
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Error syncing subastas:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Get location data that's been store in the database
   const fetchData = async () => {
