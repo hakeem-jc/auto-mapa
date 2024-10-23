@@ -11,13 +11,63 @@ export default function Home() {
   const [subastasEnMapa, setSubastasEnMapa] = useState<Subasta[]>([]);
   const [subastasSinMapa, setSubastasSinMapa] = useState<Subasta[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const toggleModal = () => setOpenModal(!openModal);
 
   // Scrape data from Subastas portal, format with AI and store in database
-  // Pass this down to the Header component
-  const syncData = () => {};
+  const syncData = async () => {
+    // Scrape data from portal
+    try {
+      setIsLoading(true);
+      setLoadingMessage("Sincronizando subastas del portal...");
+      setError(null);
+  
+      const subasta_portal_response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/sincroniza_subastas`
+      );
+  
+      if (!subasta_portal_response.ok) {
+        throw new Error("Failed to fetch subastas from portal");
+      }
+  
+      const subasta_portal_data: LocationsAPIResponse = await subasta_portal_response.json();
+      
+      // Update Map and database
+      try {
+        setLoadingMessage("Actualizando datos en el mapa...");
+        
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subastas`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(subasta_portal_data)
+        });
+  
+        if (!res.ok) {
+          throw new Error('Error al actualizar subastas en el mapa');
+        }
+  
+        const data = await res.json();
+        setSubastasEnMapa(data.subastasEnMapa);
+        setSubastasSinMapa(data.subastasSinMapa);
+  
+      } catch (err) {
+        console.error("Error updating map data:", err);
+        setError(err instanceof Error ? err.message : "Error al actualizar el mapa");
+        throw err; // Re-throw to trigger the finally block
+      }
+  
+    } catch (err) {
+      console.error("Error syncing subastas:", err);
+      setError(err instanceof Error ? err.message : "Error al sincronizar datos");
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
+    }
+  };
 
   // Get location data that's been store in the database
   const fetchData = async () => {
@@ -47,12 +97,12 @@ export default function Home() {
 
   useEffect(() => {
     fetchData();
-  }, []); // Empty dependency array means this runs once on component mount
+  }, []);
 
   return (
     <main className="flex flex-col h-screen w-full">
       {openModal && <Modal toggleModal={toggleModal} />}
-      <Header setOpenModal={toggleModal} />
+      <Header setOpenModal={toggleModal} syncData={syncData} />
       {isLoading ? <Loader/> : <Map addresses={subastasEnMapa} />}
     </main>
   );

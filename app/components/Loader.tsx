@@ -1,3 +1,4 @@
+// TODO - Add loading messages
 const Loader = () => {
   return (
     <div
