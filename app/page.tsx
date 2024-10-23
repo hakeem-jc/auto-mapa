@@ -18,7 +18,7 @@ export default function Home() {
 
   // Scrape data from Subastas portal, format with AI and store in database
   const syncData = async () => {
-    // First API call
+    // Scrape data from portal
     try {
       setIsLoading(true);
       setLoadingMessage("Sincronizando subastas del portal...");
@@ -34,7 +34,7 @@ export default function Home() {
   
       const subasta_portal_data: LocationsAPIResponse = await subasta_portal_response.json();
       
-      // Second API call
+      // Update Map and database
       try {
         setLoadingMessage("Actualizando datos en el mapa...");
         
