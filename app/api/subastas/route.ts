@@ -9,14 +9,14 @@ export async function GET() {
   try {
     const subastas = await prisma.subasta.findMany()
 
-    // Group subastas by type
+    // Group subastas by type and remove type field in the same step
     const groupedSubastas: LocationsAPIResponse = {
-      subastasEnMapa: subastas.filter(
-        (subasta) => subasta.type === 'subastasEnMapa'
-      ),
-      subastasSinMapa: subastas.filter(
-        (subasta) => subasta.type === 'subastasSinMapa'
-      ),
+      subastasEnMapa: subastas
+        .filter((subasta) => subasta.type === 'subastasEnMapa')
+        .map(({ type, ...subasta }) => subasta),
+      subastasSinMapa: subastas
+        .filter((subasta) => subasta.type === 'subastasSinMapa')
+        .map(({ type, ...subasta }) => subasta),
     }
 
     return NextResponse.json(groupedSubastas)
