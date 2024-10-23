@@ -144,7 +144,7 @@ export async function GET(_request: Request) {
     ];
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-2024-05-13",
+      model: "gpt-4o-mini",
       messages: messages as any,
     });
 
