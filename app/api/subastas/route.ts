@@ -33,8 +33,11 @@ export async function GET() {
 // POST new subastas
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { subastasEnMapa, subastasSinMapa }: LocationsAPIResponse = body
+    const body = await request.json();
+    const { subastasEnMapa, subastasSinMapa }: LocationsAPIResponse = body;
+
+    // Delete all current records to create new cache of scraped data
+    await prisma.subasta.deleteMany()
 
     // Create entries for subastas with map
     const subastasEnMapaPromises = subastasEnMapa.map((subasta: Subasta) => {
@@ -68,8 +71,11 @@ export async function POST(request: Request) {
       Promise.all(subastasSinMapaPromises)
     ])
 
-    // Combine all created subastas into a single response
-    const allCreatedSubastas = [...createdSubastasEnMapa, ...createdSubastasSinMapa]
+    // Combine all created subastas into a single response, remove the redundant type attribute
+    const allCreatedSubastas = {
+      subastasEnMapa: createdSubastasEnMapa.map(({ type, ...subasta }) => subasta),
+      subastasSinMapa: createdSubastasSinMapa.map(({ type, ...subasta }) => subasta)
+    }   
 
     return NextResponse.json(allCreatedSubastas, { status: 201 })
   } catch (error) {
