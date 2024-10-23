@@ -3,6 +3,7 @@ export interface Subasta {
   text: string;
   location: string;
   link: string;
+  type?: string;
 }
 
 export interface LocationRequest {
