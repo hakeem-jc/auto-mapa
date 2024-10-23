@@ -11,52 +11,61 @@ export default function Home() {
   const [subastasEnMapa, setSubastasEnMapa] = useState<Subasta[]>([]);
   const [subastasSinMapa, setSubastasSinMapa] = useState<Subasta[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const toggleModal = () => setOpenModal(!openModal);
 
   // Scrape data from Subastas portal, format with AI and store in database
   const syncData = async () => {
+    // First API call
     try {
       setIsLoading(true);
+      setLoadingMessage("Sincronizando subastas del portal...");
       setError(null);
-
+  
       const subasta_portal_response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/sincroniza_subastas`
       );
-
+  
       if (!subasta_portal_response.ok) {
-        throw new Error("Failed to fetch subastas");
+        throw new Error("Failed to fetch subastas from portal");
       }
-
+  
       const subasta_portal_data: LocationsAPIResponse = await subasta_portal_response.json();
-
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subastas`, {
-        method: 'POST', 
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(subasta_portal_data)
-      })
-      .then(res => {
+      
+      // Second API call
+      try {
+        setLoadingMessage("Actualizando datos en el mapa...");
+        
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subastas`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(subasta_portal_data)
+        });
+  
         if (!res.ok) {
-          // throw new Error('Network response was not ok');
-          console.error("API Error calling Subasta")
+          throw new Error('Error al actualizar subastas en el mapa');
         }
-        return res.json();
-      }).then(data => {
-          setSubastasEnMapa(data.subastasEnMapa);
-          setSubastasSinMapa(data.subastasSinMapa);
-      })
-      .catch(error => {
-        // Handle errors
-        console.error(error);
-      });
+  
+        const data = await res.json();
+        setSubastasEnMapa(data.subastasEnMapa);
+        setSubastasSinMapa(data.subastasSinMapa);
+  
+      } catch (err) {
+        console.error("Error updating map data:", err);
+        setError(err instanceof Error ? err.message : "Error al actualizar el mapa");
+        throw err; // Re-throw to trigger the finally block
+      }
+  
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
       console.error("Error syncing subastas:", err);
+      setError(err instanceof Error ? err.message : "Error al sincronizar datos");
     } finally {
       setIsLoading(false);
+      setLoadingMessage("");
     }
   };
 
