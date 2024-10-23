@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Auto Mapa",
-  description: "Encuentra sus ubicaciones más rápido",
+  description: "Encuentra sus subastas más rápido",
 };
 
 export default function RootLayout({
