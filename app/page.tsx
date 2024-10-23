@@ -36,7 +36,7 @@ export default function Home() {
       const data: LocationsAPIResponse = await response.json();
 
       setSubastasEnMapa(data.subastasEnMapa);
-      setSubastasEnMapa(data.subastasSinMapa);
+      setSubastasSinMapa(data.subastasSinMapa);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       console.error("Error fetching subastas:", err);
@@ -53,7 +53,7 @@ export default function Home() {
     <main className="flex flex-col h-screen w-full">
       {openModal && <Modal toggleModal={toggleModal} />}
       <Header setOpenModal={toggleModal} />
-      <Map addresses={subastasEnMapa} />
+      {isLoading ? <Loader/> : <Map addresses={subastasEnMapa} />}
     </main>
   );
 }
