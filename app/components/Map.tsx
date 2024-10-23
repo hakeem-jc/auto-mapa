@@ -10,6 +10,7 @@ import Loader from "@/app/components/Loader";
 import { Subasta } from "@/app/interfaces";
 
 interface GeocodedLocation {
+  title: string;
   lat: number;
   lng: number;
   address: string;
@@ -54,6 +55,7 @@ const MapComponent: React.FC<MapInterface> = ({ addresses }) => {
       try {
         const result = await geocodeAddress(geocoder, address);
         geocodedLocations.push({
+          title: address.name + ": " + address.location,
           lat: result.lat(),
           lng: result.lng(),
           address: address.location,
@@ -93,7 +95,7 @@ const MapComponent: React.FC<MapInterface> = ({ addresses }) => {
             <Marker
               key={index}
               position={{ lat: marker.lat, lng: marker.lng }}
-              title={marker.address}
+              title={marker.title}
               onClick={() => setSelectedMarker(marker)}
             />
           ))}
@@ -104,7 +106,7 @@ const MapComponent: React.FC<MapInterface> = ({ addresses }) => {
               onCloseClick={() => setSelectedMarker(null)}
             >
               <div>
-                <h2>{selectedMarker.address}</h2>
+                <h2>{selectedMarker.title}</h2>
               </div>
             </InfoWindow>
           )}
