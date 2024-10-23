@@ -16,7 +16,6 @@ export default function Home() {
   const toggleModal = () => setOpenModal(!openModal);
 
   // Scrape data from Subastas portal, format with AI and store in database
-  // Pass this down to the Header component
   const syncData = () => {};
 
   // Get location data that's been store in the database
@@ -47,12 +46,12 @@ export default function Home() {
 
   useEffect(() => {
     fetchData();
-  }, []); // Empty dependency array means this runs once on component mount
+  }, []);
 
   return (
     <main className="flex flex-col h-screen w-full">
       {openModal && <Modal toggleModal={toggleModal} />}
-      <Header setOpenModal={toggleModal} />
+      <Header setOpenModal={toggleModal} syncData={syncData} />
       {isLoading ? <Loader/> : <Map addresses={subastasEnMapa} />}
     </main>
   );
